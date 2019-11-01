@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 # ## **Introduction**
 # 
 # The aim of this project is detecting fraudulent or non-fraudulent transactions while dealing with imbalanced data. To achieve this, various supervised learning algorithms will be used and the results will be compared. 
@@ -15,9 +12,6 @@
 # 2. Hyperparameter Optimisation
 # 3. Model Building
 # 4. Comparing Performance Metrics
-
-# In[125]:
-
 
 import pandas as pd
 import numpy as np
@@ -47,37 +41,21 @@ from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve, auc
 
-# In[126]:
-
 
 data = pd.read_csv('data/creditcard.csv')
 
-# ## **1. Data Exploratory**
-# 
-# In this part; the structure of the data, missing values, features distribution and the relationship between them and target value characteristics will be examined in detail.
-# 
+# ## 1. Data Exploratory
+# In this part; the structure of the data, missing values, features distribution and the relationship between them and target value characteristics will be examined in detail. 
 # First data structure will be checked. 
-
-# In[127]:
-
 
 data.head()
 
-# In[128]:
-
-
 data.describe().transpose()
-
-# In[129]:
-
 
 data.info()
 
-# As mention on the data information section, except ``Time``, ``Amount`` and ``Class`` features others can not interpret alone. And they don't give information about context. But we all know that features which are from ``V1`` to ``V28`` have been dimensionally reduction by PCA and no need to be standardized again. But the other features which we have meaning in that data, it can be expanded on. 
-
-# In[130]:
-
-
+# As mention on the data information section, except ``Time``, ``Amount`` and ``Class`` features others can not interpret alone. 
+# And they don't give information about context. But we all know that features which are from ``V1`` to ``V28`` have been dimensionally reduction by PCA and no need to be standardized again. But the other features which we have meaning in that data, it can be expanded on. 
 # Next, Class feature will be examined.
 plt.figure(figsize=(10,10))
 sns.countplot(
@@ -91,13 +69,7 @@ plt.title('Fraudulent Transaction Summary')
 plt.xlabel('Count')
 plt.ylabel('Fraudulent Transaction   Non-Fraudulent Transaction', fontsize=12)
 
-# In[131]:
-
-
 data_value= data["Class"].value_counts()
-
-# In[132]:
-
 
 print(data_value)
 print(data_value/284807)
@@ -107,36 +79,20 @@ print(data_value/284807)
 
 # Another part is, ``Class`` structure will be converted to category and distribution of Time and Amount features will be examined. 
 
-# In[133]:
-
-
 data['Class']= data['Class'].astype('category')
-
-# In[134]:
-
 
 #Distribution of Time
 plt.figure(figsize=(15,10))
 sns.distplot(data['Time'])
-
-# In[135]:
-
 
 #Distribution of Amount
 plt.figure(figsize=(10,10))
 sns.distplot(data['Amount'])
 
 # Above graphs show that ``Time`` and ``Amount`` features needed to standardize.  Standardization  will be used to ``Time`` and ``Amount`` features for 0 mean and 1 std. This method preserves the shape of data and help to build features that have similar ranges to each other. 
-# 
 # Before standardization, I want to create a feature namely ``Hour`` which will help to examine ``Time`` feature and its relationship with ``Class`` and ``Amount`` data in a better way. 
 
-# In[136]:
-
-
 data['Hour'] = data['Time'].apply(lambda x: np.ceil(float(x)/3600) % 24)
-
-# In[137]:
-
 
 #Class vs Amount vs Hour
 pd.pivot_table(
@@ -145,9 +101,6 @@ pd.pivot_table(
     values= 'Amount', 
     aggfunc='count', 
     data=data)
-
-# In[138]:
-
 
 #Hour vs Class
 fig, axes = plt.subplots(2, 1, figsize=(15, 10))
@@ -168,9 +121,6 @@ sns.countplot(
 axes[1].set_title("Fraudulent Transaction")
 
 # Above graphs show that non-fraudulent and fraudulent transactions have been made in every hour. For the fraudulent transaction in third and twelfth hours have the highest record. On the other hand, after the eighth hour, non-fraudulent transaction counts are nearly close to each other.
-
-# In[139]:
-
 
 #Amount vs Hour vs Class
 fig, axees = plt.subplots(2, 1, figsize=(15, 10))
@@ -193,16 +143,10 @@ sns.barplot(
 
 # Above graphs show fraudulent and non-fraudulent transactions' amounts at 1 hour granularity. Based on the error bar, the amount of variation of the non-fraudulent transaction in each hour is not widely. However, in the fraudulent transaction, some data points especially first, sixth, and eleventh hours, the range of amounts is visible large. This means that there is a high difference in the amount varies between upper and lower limits.
 
-# In[140]:
-
-
 #Drop hour feature before continues next analysis.
 data=data.drop(['Hour'], axis=1)
 
 # Data exploration results and graphs show that feature size is big and class sizes imbalanced, so, dimensionality reduction helps to an interpretation of results easier. To achieve this, t-distributed stochastic neighbor embedding(t-SNE) method will be used. This method is one of the dimensionality reduction technique to make visualization in a low-dimensional space. Thus we can look details more smooth. This technique works well on high dimensional data and converts it to two- or three- dimensional spot.
-
-# In[141]:
-
 
 data_nonfraud = data[data['Class'] == 0].sample(2000)
 data_fraud  = data[data['Class'] == 1]
@@ -211,14 +155,8 @@ data_new = data_nonfraud.append(data_fraud).sample(frac=1)
 X = data_new.drop(['Class'], axis = 1).values
 y = data_new['Class'].values
 
-# In[142]:
-
-
 tsne = TSNE(n_components=2, random_state=42)
 X_transformation = tsne.fit_transform(X)
-
-# In[143]:
-
 
 plt.figure(figsize=(10, 10))
 plt.title("t-SNE Dimensionality Reduction")
@@ -236,21 +174,12 @@ plot_data(X_transformation, y)
 # ### **Standardization**
 # Standardization of Time and Amount features will be made. 
 
-# In[144]:
-
-
 data[['Time', 'Amount']] = StandardScaler().fit_transform(data[['Time', 'Amount']])
 
 # ### **Pearson Correlation Matrix**
 # The final part is computing a correlation matrix by the Pearson method and analyze relationships between features.
 
-# In[145]:
-
-
 corr=data.corr(method='pearson')
-
-# In[146]:
-
 
 plt.figure(figsize=(18, 18))
 mask = np.zeros_like(corr)
@@ -272,11 +201,8 @@ sns.heatmap(
 # The correlation matrix shows that almost all parameters have no strong relationship with each other. The highest correlation is negative and 53%. These results shows that there is no need to take out any feature from model building on the ground of high correlation. 
 
 # ## **2. Hyperparameter Optimization **
-# 
+ 
 # This method helps to find the most optimal parameters for machine learning algorithms. It has crucial importance before proceeding to model training. The Grid Search algorithm will be used for the tuning hyperparameters. Then, XGBoost model will be built to achieve the feature importance graph. This graph helps to choose parameters which will be used on the training model. 
-
-# In[147]:
-
 
 # First train and label data created. 
 train_data, label_data = data.iloc[:,:-1],data.iloc[:,-1]
@@ -284,15 +210,9 @@ train_data, label_data = data.iloc[:,:-1],data.iloc[:,-1]
 #Convert to matrix
 data_dmatrix = xgb.DMatrix(data=train_data, label= label_data)
 
-# In[148]:
-
-
 #Split data randomly to train and test subsets.
 X_train, X_test, y_train, y_test = train_test_split(
                                     train_data, label_data, test_size=0.3,random_state=42)
-
-# In[149]:
-
 
 ## Defining parameters
 
@@ -317,9 +237,6 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # Based on the result of GridSearch parameters, parameters will be defined and XGBoost algorithm can build. 
 
-# In[150]:
-
-
 params = {
     'objective':'reg:logistic',
     'colsample_bytree': 0.3,
@@ -338,9 +255,6 @@ xgb.plot_importance(xg_reg)
 
 # Above graph shows that the highest important feature is ``V16`` and this feature has a great difference with the second important one based on F score. Lowest importance parameters are ``V13``,``V25``,``Time``,``V20``,``V22``,``V8``,``V15``,``V19``, and ``V2``. These variables will be eliminated from data before model building. 
 
-# In[151]:
-
-
 data_model = data.drop(['V13', 'V25', 'Time', 'V20', 'V22', 'V8', 'V15', 'V19', 'V2'], axis=1)
 
 # ## **3.Model Building**
@@ -358,17 +272,11 @@ data_model = data.drop(['V13', 'V25', 'Time', 'V20', 'V22', 'V8', 'V15', 'V19', 
 # ### 3.1. Undersampling Method**
 # One of the most common ways of dealing with imbalanced data is undersampling method. This method helps to decrease the number of majority class. In this project, %5 out of non-fraudulent data have been chosen. 
 
-# In[152]:
-
-
 data_under_nonfraud = data_model[data_model['Class'] == 0].sample(15000)
 data_under_fraud  = data_model[data_model['Class'] == 1]
 
 data_undersampling = data_under_nonfraud.append(data_under_fraud, 
                                                 ignore_index=True, sort=False)
-
-# In[153]:
-
 
 plt.figure(figsize=(10,10))
 sns.countplot(y="Class", data=data_undersampling,palette='Dark2')
@@ -378,9 +286,6 @@ plt.ylabel('Fraudulent Transaction,        Non-Fraudulent Transaction')
 
 # ### 3.2. Data Splitting
 
-# In[154]:
-
-
 # New data will be split randomly to train and test subsets. Train data proportion is 70% and the test data proportion is 30%.
 
 model_train, model_label = data_undersampling.iloc[:,:-1],data_undersampling.iloc[:,-1]
@@ -388,9 +293,6 @@ X_train, X_test, y_train, y_test = train_test_split(
                                         model_train, model_label, test_size=0.3, random_state=42)
 
 # ### 3.3. K-Fold Cross Validation Method
-
-# In[155]:
-
 
 #5-fold Cross Validation method will be used.
 
@@ -401,9 +303,6 @@ for train_index, test_index in kfold_cv.split(X,y):
     y_train, y_test = y[train_index], y[test_index]
 
 # ### **3.4. Random Forest**
-
-# In[156]:
-
 
 # Define the model as the Random Forest
 modelRF = RandomForestClassifier(
@@ -419,9 +318,6 @@ predict_RF = modelRF.predict(X_test)
 
 # ### 3.5. Support Vector Machine
 
-# In[157]:
-
-
 # Define the model as the Support Vector Machine
 modelSVM = svm.SVC(
     kernel='rbf', 
@@ -436,9 +332,6 @@ predict_SVM = modelSVM.predict(X_test)
 
 # ### **3.6. Logistic Regression**
 
-# In[158]:
-
-
 # Define the model as the Logistic Regression
 modelLR = LogisticRegression(
     solver='lbfgs', 
@@ -452,9 +345,6 @@ modelLR = LogisticRegression(
 predict_LR = modelLR.predict(X_test)
 
 # ### **3.7. Neural Network - Multilayer Perceptron**
-
-# In[159]:
-
 
 # Define the model as the Multilayer Perceptron
 modelMLP = MLPClassifier(
@@ -490,16 +380,10 @@ predict_MLP = modelMLP.predict(X_test)
 # 
 # Lastly, we can say that precision and recall are good metrics when the positive class is smaller. These metrics are good to detect positive samples accuratley.
 
-# In[160]:
-
-
 RF_matrix = confusion_matrix(y_test, predict_RF)
 SVM_matrix = confusion_matrix(y_test, predict_SVM)
 LR_matrix = confusion_matrix(y_test, predict_LR)
 MLP_matrix = confusion_matrix(y_test, predict_MLP) 
-
-# In[161]:
-
 
 fig, ax = plt.subplots(2, 2, figsize=(15, 15))
 
@@ -534,9 +418,6 @@ ax[1,1].xaxis.set_ticklabels(['Non-Fraud', 'Fraud'])
 # Below graphs show that the confusion matrix result of each ML algorithm. For imbalanced data, confusion matrix results can be incorrect. However, it is useful to say how many fraudulent transactions predicted correctly.
 # Based on the graphs, Multilayer Perceptron, Random Forest and Logistic Regression models predict much the same Fraudulent transaction.  
 
-# In[162]:
-
-
 print("Classification_RF:")
 print(classification_report(y_test, predict_RF))
 print("Classification_SVM:")
@@ -553,9 +434,6 @@ print(classification_report(y_test, predict_MLP))
 # * F1-Score gives a better explanation on the grounds that it is calculated from the harmonic mean of Precision and Recall. Especially, the highest recall and lower precision situations. F1 Score is mostly better metrics to choose the best-predicted model. In light of this information, we can say that Random Forest is the best-predicted algorithms in all models. 
 
 # Final comparing will be made with ROC Curve and AUC Score. ROC curve gives a good metric when the detection of both classes is equally important. With an AUC area, we can define the better classifier algorithm.
-
-# In[163]:
-
 
 #RF AUC
 rf_predict_probabilities = modelRF.predict_proba(X_test)[:,1]
@@ -576,10 +454,6 @@ lr_roc_auc = auc(lr_fpr, lr_tpr)
 mlp_predict_probabilities = modelMLP.predict_proba(X_test)[:,1]
 mlp_fpr, mlp_tpr, _ = roc_curve(y_test, mlp_predict_probabilities)
 mlp_roc_auc = auc(mlp_fpr, mlp_tpr)
-
-
-# In[164]:
-
 
 plt.figure()
 plt.plot(rf_fpr, rf_tpr, color='red',lw=2,
@@ -602,7 +476,6 @@ plt.ylabel('True Positive Rate')
 plt.title('ROC Curve')
 plt.legend(loc="lower right")
 plt.show()
-
 
 # Based on the above ROC curve, we can say that, Logistic Regression, Random Forest  and Neural Network-Multilayer Perceptron algorithms have nearly similar AUC results. A great model has AUC near to the 1 which means it has a good measure of separability.
 # 
